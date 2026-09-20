@@ -401,3 +401,26 @@ if VARIANT.lower() == 'active10':
         p.write_text(s,encoding='utf-8')
 
 print('Custom QGC patches applied for', VARIANT)
+
+
+# Active 10 Pro / custom Fly View: keep video as the main surface even before a live
+# stream is detected, so the custom no-video background is visible instead of the map.
+flyview = ROOT/'src/FlightDisplay/FlyView.qml'
+s = flyview.read_text(encoding='utf-8')
+s = s.replace('item1IsFullSettingsKey: "MainFlyWindowIsMap"', 'item1IsFullSettingsKey: "MainFlyWindowIsVideoCustom"')
+s = s.replace('item1:                  mapControl\n        item2:                  QGroundControl.videoManager.hasVideo ? videoControl : null',
+              'item1:                  videoControl\n        item2:                  mapControl')
+flyview.write_text(s, encoding='utf-8')
+
+flyvideo = ROOT/'src/FlightDisplay/FlyViewVideo.qml'
+s = flyvideo.read_text(encoding='utf-8')
+s = s.replace('visible:    QGroundControl.videoManager.hasVideo', 'visible:    true', 1)
+flyvideo.write_text(s, encoding='utf-8')
+
+# The custom MONOLIT image itself is injected into the built APK/resource bundle;
+# keep the no-video screen clean without the stock WAITING FOR VIDEO label.
+fdv = ROOT/'src/FlightDisplay/FlightDisplayViewVideo.qml'
+s = fdv.read_text(encoding='utf-8')
+s = s.replace('text:               QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue ? qsTr("WAITING FOR VIDEO") : qsTr("VIDEO DISABLED")',
+              'text:               ""')
+fdv.write_text(s, encoding='utf-8')
