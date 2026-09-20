@@ -102,8 +102,14 @@ Item {
     width: row.width
     property bool showIndicator: _activeVehicle !== null
     property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-    property bool _hasTelemetry: _activeVehicle ? _activeVehicle.telemetryLRSSI !== 0 : false
-    property real _dbm: _hasTelemetry ? Number(_activeVehicle.telemetryLRSSI) : NaN
+    property bool _commLost: _activeVehicle && _activeVehicle.vehicleLinkManager ? _activeVehicle.vehicleLinkManager.communicationLost : false
+    property real _lrssi: _activeVehicle ? Number(_activeVehicle.telemetryLRSSI) : NaN
+    property real _rrssi: _activeVehicle ? Number(_activeVehicle.telemetryRRSSI) : NaN
+    property bool _hasL: !isNaN(_lrssi) && _lrssi !== 0
+    property bool _hasR: !isNaN(_rrssi) && _rrssi !== 0
+    property bool _hasTelemetry: _activeVehicle && !_commLost && (_hasL || _hasR)
+    // -128 dBm is a valid weak-signal value. It does NOT mean telemetry is lost.
+    property real _dbm: !_hasTelemetry ? NaN : (_hasL && _hasR ? Math.max(_lrssi, _rrssi) : (_hasL ? _lrssi : _rrssi))
     property real _visp: (_activeVehicle && _activeVehicle.efi && _activeVehicle.efi.engineLoad) ? Number(_activeVehicle.efi.engineLoad.rawValue) : NaN
     property color _vispColor: isNaN(_visp) ? "#808080" : (_visp < 50 ? "#ff0000" : (_visp < 96 ? "#ff9800" : "#00c853"))
 
@@ -180,6 +186,26 @@ Item {
 fdv = ROOT/'src/FlightDisplay/FlightDisplayViewVideo.qml'
 s = fdv.read_text(encoding='utf-8')
 insert = r'''
+
+    // Video weak-signal overlay with hysteresis. Telemetry remains independent.
+    property var _customVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property real _customLrssi: _customVehicle ? Number(_customVehicle.telemetryLRSSI) : NaN
+    property real _customRrssi: _customVehicle ? Number(_customVehicle.telemetryRRSSI) : NaN
+    property real _customDbm: (!isNaN(_customLrssi) && _customLrssi !== 0 && !isNaN(_customRrssi) && _customRrssi !== 0) ? Math.max(_customLrssi,_customRrssi) : ((!isNaN(_customLrssi) && _customLrssi !== 0) ? _customLrssi : _customRrssi)
+    property bool _customWeakVideo: false
+    on_CustomDbmChanged: {
+        if (!isNaN(_customDbm)) {
+            if (_customDbm <= -90) _customWeakVideo = true
+            else if (_customDbm > -85 && QGroundControl.videoManager.decoding) _customWeakVideo = false
+        }
+    }
+    Image {
+        z: 850
+        anchors.fill: parent
+        visible: _customWeakVideo || !QGroundControl.videoManager.decoding
+        source: "/res/NoVideoBackground.jpg"
+        fillMode: Image.PreserveAspectCrop
+    }
 
     Canvas {
         id: customReticle
