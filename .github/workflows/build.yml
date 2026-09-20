@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        variant: [normal, active10]
+        variant: [normal]
     steps:
       - name: Checkout build repo
         uses: actions/checkout@v4
