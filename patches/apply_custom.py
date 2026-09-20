@@ -148,11 +148,65 @@ Item {
 '''
 (ROOT/'src/ui/toolbar/VISPIndicator.qml').write_text(visp_indicator, encoding='utf-8')
 
+
+dbm_indicator = r'''import QtQuick 2.11
+import QtQuick.Layouts 1.11
+import QGroundControl 1.0
+import QGroundControl.Controls 1.0
+import QGroundControl.ScreenTools 1.0
+
+Item {
+    id: root
+
+    property real lrssi: NaN
+    property real rrssi: NaN
+    property bool communicationLost: false
+
+    readonly property bool hasL: !isNaN(lrssi) && lrssi !== 0
+    readonly property bool hasR: !isNaN(rrssi) && rrssi !== 0
+    readonly property bool hasTelemetry: !communicationLost && (hasL || hasR)
+    // -128 dBm is valid weak signal and must remain visible while MAVLink is alive.
+    readonly property real dbm: !hasTelemetry ? NaN : (hasL && hasR ? Math.max(lrssi, rrssi) : (hasL ? lrssi : rrssi))
+    readonly property int percent: isNaN(dbm) ? 0
+                                  : (dbm >= -30 ? 100
+                                  : (dbm >= -80 ? Math.round(70 + (dbm + 80) * 29 / 50)
+                                  : (dbm >= -85 ? Math.round(45 + (dbm + 85) * 24 / 5)
+                                  : (dbm >= -90 ? Math.round(10 + (dbm + 90) * 34 / 5)
+                                  : (dbm >= -100 ? Math.max(1, Math.round(1 + (dbm + 100) * 8 / 10))
+                                  : 0)))))
+    readonly property color stateColor: !hasTelemetry ? "#808080"
+                                        : (dbm >= -80 ? "#00c853"
+                                        : (dbm >= -90 ? "#ff9800" : "#ff0000"))
+
+    implicitWidth: row.implicitWidth
+    implicitHeight: row.implicitHeight
+
+    Row {
+        id: row
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: ScreenTools.defaultFontPixelWidth * 0.35
+
+        QGCLabel {
+            anchors.verticalCenter: parent.verticalCenter
+            text: root.hasTelemetry ? (Math.round(root.dbm) + " dBm") : "-- dBm"
+            color: "white"
+            font.family: ScreenTools.demiboldFontFamily
+        }
+
+        StatusDot {
+            anchors.verticalCenter: parent.verticalCenter
+            statusColor: root.stateColor
+        }
+    }
+}
+'''
+(ROOT/'src/ui/toolbar/DbmIndicator.qml').write_text(dbm_indicator, encoding='utf-8')
+
 # Make the two new QML files available through the same /qml resource prefix.
 qrc = ROOT/'qgroundcontrol.qrc'
 qs = qrc.read_text(encoding='utf-8')
 needle = '        <file alias="TelemetryRSSIIndicator.qml">src/ui/toolbar/TelemetryRSSIIndicator.qml</file>\n'
-replacement = needle + '        <file alias="StatusDot.qml">src/ui/toolbar/StatusDot.qml</file>\n' + '        <file alias="VISPIndicator.qml">src/ui/toolbar/VISPIndicator.qml</file>\n'
+replacement = needle + '        <file alias="StatusDot.qml">src/ui/toolbar/StatusDot.qml</file>\n' + '        <file alias="VISPIndicator.qml">src/ui/toolbar/VISPIndicator.qml</file>\n' + '        <file alias="DbmIndicator.qml">src/ui/toolbar/DbmIndicator.qml</file>\n'
 if 'alias="VISPIndicator.qml"' not in qs:
     qs = qs.replace(needle, replacement)
 qrc.write_text(qs, encoding='utf-8')
@@ -200,11 +254,11 @@ Item {
             fillMode: Image.PreserveAspectFit
             color: qgcPal.buttonText
         }
-        QGCLabel {
+        DbmIndicator {
             anchors.verticalCenter: parent.verticalCenter
-            text: _hasTelemetry ? (Math.round(_dbm) + " dBm") : "-- dBm"
-            color: qgcPal.buttonText
-            font.family: ScreenTools.demiboldFontFamily
+            lrssi: _lrssi
+            rrssi: _rrssi
+            communicationLost: _commLost
         }
         VISPIndicator {
             anchors.verticalCenter: parent.verticalCenter
