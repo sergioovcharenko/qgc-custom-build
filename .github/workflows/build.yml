@@ -51,12 +51,11 @@ jobs:
           ndk-version: r21e
           add-to-path: false
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Install Android API 30
         run: |
-          yes | sdkmanager "platforms;android-30" "build-tools;30.0.3"
+          SDKMANAGER="/usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platforms;android-30" "build-tools;30.0.3"
 
       - name: Install build tools
         run: sudo apt-get update && sudo apt-get install -y ccache ninja-build
