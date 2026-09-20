@@ -280,7 +280,7 @@ insert = r'''
         }
         QGCLabel {
             anchors.right: parent.right
-            text: _camera && !isNaN(Number(_camera.zoomLevel)) ? ("×" + Math.round(Number(_camera.zoomLevel))) : "×--"
+            text: _camera && !isNaN(Number(_camera.zoomLevel)) ? ("x" + Math.round(Number(_camera.zoomLevel))) : "x--"
             color: "white"
             font.family: ScreenTools.demiboldFontFamily
             font.pointSize: ScreenTools.mediumFontPointSize
