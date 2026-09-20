@@ -136,7 +136,8 @@ Item {
         QGCLabel {
             anchors.verticalCenter: parent.verticalCenter
             text: "VISP:"
-            color: qgcPal.buttonText
+            color: _vispColor
+            font.family: ScreenTools.demiboldFontFamily
         }
         Rectangle {
             anchors.verticalCenter: parent.verticalCenter
