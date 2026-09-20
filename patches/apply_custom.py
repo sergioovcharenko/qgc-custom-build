@@ -84,6 +84,79 @@ Item {
 '''
 (ROOT/'src/ui/toolbar/RCRSSIIndicator.qml').write_text(rcrssi,encoding='utf-8')
 
+
+status_dot = r'''import QtQuick 2.11
+import QGroundControl.ScreenTools 1.0
+
+Rectangle {
+    id: root
+    property color statusColor: "#808080"
+    property real dotScale: 0.60
+
+    width: ScreenTools.defaultFontPixelHeight * dotScale
+    height: width
+    radius: width / 2
+    color: statusColor
+    border.width: 1
+    border.color: Qt.rgba(1,1,1,0.75)
+}
+'''
+(ROOT/'src/ui/toolbar/StatusDot.qml').write_text(status_dot, encoding='utf-8')
+
+visp_indicator = r'''import QtQuick 2.11
+import QtQuick.Layouts 1.11
+import QGroundControl 1.0
+import QGroundControl.Controls 1.0
+import QGroundControl.ScreenTools 1.0
+
+Item {
+    id: root
+
+    property real value: NaN
+    property color noDataColor: "#808080"
+    property color badColor: "#ff0000"
+    property color warningColor: "#ff9800"
+    property color goodColor: "#00c853"
+
+    readonly property color stateColor: isNaN(value)
+                                        ? noDataColor
+                                        : (value < 50
+                                           ? badColor
+                                           : (value < 96 ? warningColor : goodColor))
+
+    implicitWidth: row.implicitWidth
+    implicitHeight: row.implicitHeight
+
+    Row {
+        id: row
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: ScreenTools.defaultFontPixelWidth * 0.35
+
+        QGCLabel {
+            anchors.verticalCenter: parent.verticalCenter
+            text: "VISP:"
+            color: "white"
+            font.family: ScreenTools.demiboldFontFamily
+        }
+
+        StatusDot {
+            anchors.verticalCenter: parent.verticalCenter
+            statusColor: root.stateColor
+        }
+    }
+}
+'''
+(ROOT/'src/ui/toolbar/VISPIndicator.qml').write_text(visp_indicator, encoding='utf-8')
+
+# Make the two new QML files available through the same /qml resource prefix.
+qrc = ROOT/'qgroundcontrol.qrc'
+qs = qrc.read_text(encoding='utf-8')
+needle = '        <file alias="TelemetryRSSIIndicator.qml">src/ui/toolbar/TelemetryRSSIIndicator.qml</file>\n'
+replacement = needle + '        <file alias="StatusDot.qml">src/ui/toolbar/StatusDot.qml</file>\n' + '        <file alias="VISPIndicator.qml">src/ui/toolbar/VISPIndicator.qml</file>\n'
+if 'alias="VISPIndicator.qml"' not in qs:
+    qs = qs.replace(needle, replacement)
+qrc.write_text(qs, encoding='utf-8')
+
 telem = r'''/****************************************************************************
  * Custom telemetry / VISP / TRACK toolbar indicator
  ****************************************************************************/
@@ -133,20 +206,9 @@ Item {
             color: qgcPal.buttonText
             font.family: ScreenTools.demiboldFontFamily
         }
-        QGCLabel {
+        VISPIndicator {
             anchors.verticalCenter: parent.verticalCenter
-            text: "VISP:"
-            color: _vispColor
-            font.family: ScreenTools.demiboldFontFamily
-        }
-        Rectangle {
-            anchors.verticalCenter: parent.verticalCenter
-            width: ScreenTools.defaultFontPixelHeight * 0.60
-            height: width
-            radius: width / 2
-            color: _vispColor
-            border.width: 1
-            border.color: qgcPal.buttonText
+            value: _visp
         }
         Rectangle {
             id: trackButton
