@@ -273,14 +273,14 @@ insert = r'''
         spacing: ScreenTools.defaultFontPixelHeight * 0.15
         QGCLabel {
             anchors.right: parent.right
-            text: _customActiveGimbal && _customActiveGimbal.absolutePitch ? ("CAM " + Math.round(Number(_customActiveGimbal.absolutePitch.rawValue)) + "°") : "CAM --°"
+            text: _customActiveGimbal && _customActiveGimbal.absolutePitch ? ("∠ " + Math.round(Number(_customActiveGimbal.absolutePitch.rawValue)) + "°") : "∠ --°"
             color: "white"
             font.family: ScreenTools.demiboldFontFamily
             font.pointSize: ScreenTools.mediumFontPointSize
         }
         QGCLabel {
             anchors.right: parent.right
-            text: _camera && !isNaN(Number(_camera.zoomLevel)) ? ("ZOOM " + Math.round(Number(_camera.zoomLevel))) : "ZOOM --"
+            text: _camera && !isNaN(Number(_camera.zoomLevel)) ? ("×" + Math.round(Number(_camera.zoomLevel))) : "×--"
             color: "white"
             font.family: ScreenTools.demiboldFontFamily
             font.pointSize: ScreenTools.mediumFontPointSize
