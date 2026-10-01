@@ -2,7 +2,7 @@ name: Build custom QGC Android
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, digital-dehaze-x-target ]
   workflow_dispatch:
 
 permissions:
@@ -33,6 +33,8 @@ jobs:
           cp patches/apply_custom.py qgc/apply_custom.py
           cd qgc
           python3 apply_custom.py ${{ matrix.variant }}
+          cp ../patches/apply_digital_dehaze.py apply_digital_dehaze.py
+          python3 apply_digital_dehaze.py
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
